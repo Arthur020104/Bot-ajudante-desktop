@@ -39,7 +39,7 @@ def ouvir_microfone(question = 0, resposta = ''):
         
         #Armazena o que foi dito numa variavel
         try:
-            audio = microfone.listen(source,timeout=3)
+            audio = microfone.listen(source,timeout=4)
         except sr.WaitTimeoutError:
             print("Não entendi")
             ouvir_microfone()
@@ -92,12 +92,12 @@ def ouvir_microfone(question = 0, resposta = ''):
             name = ''
             name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
             print(f"Mudando para {name.lower()}")
-            if os.path.exists(f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.png"):
-                print(f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.png")
-                ctypes.windll.user32.SystemParametersInfoW(20, 0, f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.png" , 2)
-            elif os.path.exists(f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.jpg"):
-                print(f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.jpg")
-                ctypes.windll.user32.SystemParametersInfoW(20, 0, f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.jpg" , 2)
+            if os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png"):
+                print(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png")
+                ctypes.windll.user32.SystemParametersInfoW(20, 0, f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png" , 2)
+            elif os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.jpg"):
+                print(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.jpg")
+                ctypes.windll.user32.SystemParametersInfoW(20, 0, f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.jpg" , 2)
             else:
                 motor.say(f"Falha em localizar {name.lower().lstrip()}.")
                 motor.runAndWait()
@@ -196,7 +196,15 @@ def ouvir_microfone(question = 0, resposta = ''):
         ouvir_microfone()
         
     return frase
+def criar_pastawallpapersexite():
+    if not os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers"):
+        os.mkdir(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers")
+    if not os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/Ler.txt"):
+        arquivo = open(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/Ler.txt", 'w+')
+        arquivo.writelines("Adicionar os wallpapers nessa pasta e todos os nomes dos arquivos devem ser com letras minúsculas.")
+        arquivo.close()
 
 
 if __name__ == "__main__":
+    criar_pastawallpapersexite()
     ouvir_microfone()
