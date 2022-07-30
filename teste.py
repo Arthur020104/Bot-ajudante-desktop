@@ -81,7 +81,7 @@ def ouvir_microfone(question = 0, resposta = ''):
             if resposta['taskkill']:
                 os.system(f'TASKKILL /F /IM {resposta["taskkill"]} /T')
         if 'r2'in frase.lower():
-            playsound("C:/Users/Arthur/Downloads/r2.mp3")
+            playsound(f"C:/Users/{os.getlogin()}/Downloads/r2.mp3")
         if 'esconder barra' in frase.lower():
             run(hideBar)
         if 'mostrar barra' in frase.lower():
@@ -122,7 +122,7 @@ def ouvir_microfone(question = 0, resposta = ''):
             try:
                 s = app
                 map(''.join,    itertools.product(*zip(s.upper(), s.lower())))
-                os.startfile(f"C:/Users/Arthur/Desktop/{app.lstrip()}")
+                os.startfile(f"C:/Users/{os.getlogin()}/Desktop/{app.lstrip()}")
                 motor.say(f"Abrindo {app.lstrip()}.")
                 motor.runAndWait()
             except FileNotFoundError:
