@@ -7,15 +7,6 @@ from playsound import playsound
 import subprocess
 from datetime import datetime
 now = datetime.now()
-"""import time
-import shutil
-import sys"""
-#from multiprocessing import Process
-#sys.path.insert(1, 'C:/Users/Arthur/Desktop/Code/SpeeachTest/')
-
-#from animacao import animation
-
-
 
 hideBar = "&{$p='HKCU:SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3';$v=(Get-ItemProperty -Path $p).Settings;$v[8]=3;&Set-ItemProperty -Path $p -Name Settings -Value $v;&Stop-Process -f -ProcessName explorer}"
 showbar = "&{$p='HKCU:SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3';$v=(Get-ItemProperty -Path $p).Settings;$v[8]=2;&Set-ItemProperty -Path $p -Name Settings -Value $v;&Stop-Process -f -ProcessName explorer}"
@@ -25,57 +16,37 @@ def run(cmd):
 motor = pyttsx3.init()
 motor.say(f"{'Bom dia' if now.hour < 12 and now.hour > 4  else 'Boa tarde' if now.hour >= 12 and now.hour < 18 else 'Boa noite'} {os.getlogin()}.")
 motor.runAndWait()
-#Função para ouvir e reconhecer a fala
-def ouvir_microfone(question = 0, resposta = ''):
-    #Habilita o microfone do usuário
+def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
     microfone = sr.Recognizer()
-    #usando o microfone
+    #^
+    #|Habilitando mic/|usando o microfone
+    #                 ˘
     with sr.Microphone() as source:
-        #Chama um algoritmo de reducao de ruidos no som
         microfone.adjust_for_ambient_noise(source)
-        
-        #Frase para o usuario dizer algo
         print("Diga alguma coisa: ")
-        
-        #Armazena o que foi dito numa variavel
+        #Tenta armazenar o que foi dito numa variavel, se nao for possivel avisa que nao entedeu e chama a msm funcao dnv
         try:
             audio = microfone.listen(source,timeout=4)
         except sr.WaitTimeoutError:
             print("Não entendi")
-            ouvir_microfone()
-        
+            escutar_audio_mic_reconhecer_falar()
     try:
-        #Passa a variável para o algoritmo reconhecedor de padroes
+        #passa a variavel de audio para o reconhecedor de padroes do google
         frase = microfone.recognize_google(audio,language='pt-BR')
-        """microfone = None
-        audio = None
-        source = None"""
         if 'modo de jogo' in frase.lower():
-            location = frase.find('modo de jogo')
-            location += 12
-            name = ''
-            name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
-            
-        #frase = frase['alternative'][0]['transcript']
+            name = retornarpesquisa(frase, 'modo de jogo')
         print(frase)
         if 'pesquisar' in frase.lower():
-            location = frase.find('pesquisar')
-            location += 9
-            name = ''
-            name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
-            #os.startfile(f"C:/Users/Public/Desktop/Google Chrome")
+            name = retornarpesquisa(frase, "pesquisar")
             motor.say(f"Pesquisando {name}.")
             motor.runAndWait()
-            
             try:
                 from googlesearch import search
             except ImportError:
                 print("Módulo chamado 'google' nao encontrado.")
-
-            
-            for j in search(name, tld="co.in", num=1, stop=1, pause=2):
+            for urls in search(name, tld="co.in", num=1, stop=1, pause=2):
                 import webbrowser
-                url = j
+                url = urls
                 webbrowser.open(url)
         if question == 1 and 'sim' in frase.lower():
             if resposta['taskkill']:
@@ -87,10 +58,7 @@ def ouvir_microfone(question = 0, resposta = ''):
         if 'mostrar barra' in frase.lower():
             run(showbar)
         if 'mudar' in frase.lower():
-            location = frase.find('mudar')
-            location += 5
-            name = ''
-            name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
+            name = retornarpesquisa(frase, 'mudar')
             print(f"Mudando para {name.lower()}")
             if os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png"):
                 print(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png")
@@ -101,24 +69,8 @@ def ouvir_microfone(question = 0, resposta = ''):
             else:
                 motor.say(f"Falha em localizar {name.lower().lstrip()}.")
                 motor.runAndWait()
-        """ if 'animação' in frase.lower():
-            location = frase.find('animação')
-            location += 8
-            name = ''
-            name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
-            print(name)
-            if os.path.exists('C:/Users/Arthur/Desktop/Code/SpeeachTest/pasta_imagens/'):
-                shutil.rmtree('C:/Users/Arthur/Desktop/Code/SpeeachTest/pasta_imagens')
-            if os.path.exists(f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.mp4"):
-                p = Process(target=animation, args=(name,))
-                p.daemon = True
-                p.start()"""
-
         if "abrir" in frase.lower():
-            location = frase.find('abrir')
-            location += 6
-            app = ''
-            app = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
+            app = retornarpesquisa(frase, "abrir")
             try:
                 s = app
                 map(''.join,    itertools.product(*zip(s.upper(), s.lower())))
@@ -135,44 +87,38 @@ def ouvir_microfone(question = 0, resposta = ''):
                     motor.runAndWait()
                     print(f"Arquivo {app.lstrip()} não encontado.")
                     #print(f"C:/Users/Arthur/Desktop/{app.lstrip()}")
-                    ouvir_microfone()
+                    escutar_audio_mic_reconhecer_falar()
         if "fechar" in frase.lower():
-            location = frase.find('fechar')
-            location += 7
-            app = ''
-            app = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
+            app = retornarpesquisa(frase, "fechar")
             try :
-                x = os.system(f'TASKKILL /F /IM {app.lstrip()}.exe /T')
-                if x == 128:
+                retorno = os.system(f'TASKKILL /F /IM {app.lstrip()}.exe /T')
+                if retorno == 128:
                     raise Exception("Arquivo não encontrado")
-                if x == 1:
-                    appp = app.title()
-                    appjunto = ''.join(appp.split())
-                    #app = ''.join(app.split())
-                    x = os.system(f'TASKKILL /F /IM {appjunto.lstrip()}.exe /T')
-                    if x == 128:
-                        os.system(f'taskkill /F /FI "WINDOWTITLE eq {appp.lstrip()}" ')
+                if retorno == 1:
+                    nomedoapp_title = app.title()
+                    nomedoapp_sem_espaco = ''.join(nomedoapp_title.split())
+                    retorno = os.system(f'TASKKILL /F /IM {nomedoapp_sem_espaco.lstrip()}.exe /T')
+                    if retorno == 128:
+                        os.system(f'taskkill /F /FI "WINDOWTITLE eq {nomedoapp_title.lstrip()}" ')
                         raise Exception("Arquivo não encontrado")
-                    #else:
             except Exception:
-                appp = app.title()
-                output = os.popen('wmic process get description, processid').read()
-                #"""print("2y")
-                #print(y)
-                appp = ''.join(appp.split())
-                appp = app.lower() if app.lower() in output.lower() else appp.lower()
-                if appp in output.lower():
-                    location = output.lower().find(appp)
+                nomedoapp_title = app.title()
+                todos_processos_pc = os.popen('wmic process get description, processid').read()
+                nomedoapp_title = ''.join(nomedoapp_title.split())
+                nome_app_parabusca = app.lower() if app.lower() in todos_processos_pc.lower() else nomedoapp_title.lower()
+                #se o nome do app tiver em algum processo rodando no pc, procura o processo e pergunta se era esse que queria fechar
+                if nome_app_parabusca in todos_processos_pc.lower():
+                    location = todos_processos_pc.lower().find(nome_app_parabusca)
                     point = 0
                     palavra = ''
                     for i in range(100):
-                        palavra += output[location+i]
-                        if location + i >= len(output):
+                        palavra += todos_processos_pc[location+i]
+                        if location + i >= len(todos_processos_pc):
                             palavra = ''
                             break
-                        if (output[location+i] and output[location+i-2]  == 'e') and output[location+i-3] == '.' and output[location+i-1] == 'x':
+                        if (todos_processos_pc[location+i] and todos_processos_pc[location+i-2]  == 'e') and todos_processos_pc[location+i-3] == '.' and todos_processos_pc[location+i-1] == 'x':
                             point += 4
-                        if output[location+i] == "" or output[location+i] == "\n":
+                        if todos_processos_pc[location+i] == "" or todos_processos_pc[location+i] == "\n":
                             palavra = ''
                             point = 0
                         if point == 4:
@@ -180,23 +126,28 @@ def ouvir_microfone(question = 0, resposta = ''):
                             motor.say(f"Você quis dizer {palavra[0:len(palavra)-4]}?")
                             motor.runAndWait()
                             resposta = { 'taskkill':palavra}
-                            ouvir_microfone(1,resposta)
-                    #print()
+                            escutar_audio_mic_reconhecer_falar(1,resposta)
                 motor.say(f"Arquivo {app.lstrip()} não encontado.")
                 motor.runAndWait()
-                ouvir_microfone()
+                escutar_audio_mic_reconhecer_falar()
         
-        #Retorna a frase pronunciada
         print("Você disse: " + frase)
-        ouvir_microfone()
-    
-    #Se nao reconheceu o padrao de fala, exibe a mensagem
+        #Retorno da frase
+        escutar_audio_mic_reconhecer_falar()
+
     except sr.UnknownValueError:
+        #Exibir mensagem se nao reconhecer padrao de fala
         print("Não entendi")
-        ouvir_microfone()
+        escutar_audio_mic_reconhecer_falar()
         
     return frase
-def criar_pastawallpapersexite():
+def retornarpesquisa(frase, acao):
+    location = frase.find(acao)
+    location += len(acao)
+    name = ''
+    name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
+    return name
+def criar_pastawallpapers_senaoexite():
     if not os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers"):
         os.mkdir(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers")
     if not os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/Ler.txt"):
@@ -206,5 +157,25 @@ def criar_pastawallpapersexite():
 
 
 if __name__ == "__main__":
-    criar_pastawallpapersexite()
-    ouvir_microfone()
+    criar_pastawallpapers_senaoexite()
+    escutar_audio_mic_reconhecer_falar()
+#codigo de animacao que talvez vou usar
+"""import time
+import shutil
+import sys"""
+#from multiprocessing import Process
+#sys.path.insert(1, 'C:/Users/Arthur/Desktop/Code/SpeeachTest/')
+
+#from animacao import animation
+""" if 'animação' in frase.lower():
+    location = frase.find('animação')
+    location += 8
+    name = ''
+    name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
+    print(name)
+    if os.path.exists('C:/Users/Arthur/Desktop/Code/SpeeachTest/pasta_imagens/'):
+        shutil.rmtree('C:/Users/Arthur/Desktop/Code/SpeeachTest/pasta_imagens')
+    if os.path.exists(f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.mp4"):
+        p = Process(target=animation, args=(name,))
+        p.daemon = True
+        p.start()"""
