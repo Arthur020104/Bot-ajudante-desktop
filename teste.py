@@ -3,21 +3,20 @@ import itertools
 import os
 import pyttsx3
 import ctypes
-from playsound import playsound
 import subprocess
 from datetime import datetime
-from cs50 import SQL
+import sqlite3
 import random
 # configurando sql database
 try:
-    db = SQL(f"sqlite:///C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db")
+    db = sqlite3.connect(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db")
 except RuntimeError:
     print("Nao existe")
     os.mkdir(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante")
     arquivo = open(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db", 'w+')
     arquivo.close()
-    db = SQL(f"sqlite:///C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db")
-    db.execute("CREATE TABLE modos_de_jogo(id INTEGER PRIMARY KEY,nome TEXT, imgs_list TEXT, app_list TEXT)")
+    db = sqlite3.connect(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db")
+    db.execute('''CREATE TABLE modos_de_jogo(id INTEGER PRIMARY KEY,nome TEXT, imgs_list TEXT, app_list TEXT)''')
     #Seria melhor criar uma tabela para as imgs e uma para os apps e dps estabelecer relaçao one-to-many, mas vou deixar mais simples agr
 now = datetime.now()
 
@@ -74,25 +73,34 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
                     num = int(input("Qual apps vc deseja selecionar.\n-"))
                     apps.append(list_all_desktop_apps[num])
                 string_dos_apps = "".join([f'{apps[i]}\n' if not i+1 == len(apps) else f'{apps[i]}' for i in range(len(apps))])
-                db.execute("INSERT INTO modos_de_jogo(nome,imgs_list,app_list) VALUES(?, ?, ?)",nome_mododejogo, string_das_imgs,string_dos_apps)
+                db.execute("INSERT INTO modos_de_jogo(nome,imgs_list,app_list) VALUES(?, ?, ?)",(nome_mododejogo, string_das_imgs,string_dos_apps,))
+                db.commit()
                #listar apps nas areas de trabalho e numerar igual acima
             modos_de_jogo = db.execute("SELECT nome FROM modos_de_jogo")
+            modos_de_jogo = modos_de_jogo.fetchall()
+            modos_de_jogo = [nome[0] for nome in modos_de_jogo]
+            print(modos_de_jogo)
             if not modos_de_jogo:
+                print(modos_de_jogo)
+                print('x')
                 print('Você ainda nao adicionou nenhum modo de jogo.')
                 escutar_audio_mic_reconhecer_falar()
-            if name in modos_de_jogo[0]['nome']:
-                dados_modo = db.execute("SELECT * FROM modos_de_jogo WHERE nome == ?",name.lower())[0]
-                imgs_list = dados_modo['imgs_list'].split("\n")
+            if name in modos_de_jogo:
+                dados_modo = db.execute("SELECT * FROM modos_de_jogo WHERE nome == ?",(name.lower(),))
+                dados_modo = [dado for dado in dados_modo.fetchone()]
+                print(dados_modo)
+                imgs_list = dados_modo[2].split("\n")
                 img = imgs_list[random.randrange(0, len(imgs_list))]
-                apps_list = dados_modo['app_list'].split("\n")
+                apps_list = dados_modo[3].split("\n")
                 alterar_desktop_img(img)
                 for app in apps_list:
                     open_app(app)
             if 'deletar' in name:
                 namedel = retornarpesquisa(frase, 'modo de jogo deletar').lower()
-                if not namedel in modos_de_jogo[0]['nome']:
+                if not namedel in modos_de_jogo:
                     return
-                db.execute('DELETE FROM modos_de_jogo WHERE nome == ?',namedel)
+                db.execute('DELETE FROM modos_de_jogo WHERE nome == ?',(namedel,))
+                db.commit()
 
         print(frase)
         if 'pesquisar' in frase.lower():
@@ -180,7 +188,7 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
     return frase
 def retornarpesquisa(frase, acao):
     location = frase.find(acao)
-    location += len(acao)
+    location += len(acao)+1
     name = ''
     name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
     return name.lstrip()
