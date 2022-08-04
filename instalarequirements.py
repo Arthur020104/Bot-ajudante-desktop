@@ -1,6 +1,6 @@
 from time import sleep
 import subprocess
-requirements = ["opencv-python","google","playsound", "pyttsx3", "SpeechRecognition","datetime","pipwin"]
+requirements = ["opencv-python","google","playsound", "pyttsx3", "SpeechRecognition","datetime","pipwin","cs50"]
 #playsound ctypes
 def run(cmd):
     subprocess.run(["powershell", "-Command", cmd])
