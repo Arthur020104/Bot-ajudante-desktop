@@ -10,7 +10,7 @@ import random
 # configurando sql database
 try:
     db = sqlite3.connect(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db")
-except RuntimeError:
+except sqlite3.OperationalError:
     print("Nao existe")
     os.mkdir(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante")
     arquivo = open(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db", 'w+')
