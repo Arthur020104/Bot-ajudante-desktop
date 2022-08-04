@@ -35,6 +35,18 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
         frase = microfone.recognize_google(audio,language='pt-BR')
         if 'modo de jogo' in frase.lower():
             name = retornarpesquisa(frase, 'modo de jogo')
+            if name == "criar":
+                #ABRIR NOVO TERMINAL AQUI
+                quant_imgs = input("Quantas imagens você deseja adicionar nesse modo de jogo.")
+                #get imgs list
+                # print(IMAGES-LIST)
+                imgs = []
+                for imgs_n in quant_imgs:
+                    num = int(input("Qual img vc deseja selecionar."))
+                    imgs[imgs_n] = #list_imgs[num]
+                quant_apps = input("Quantas apps você deseja adicionar nesse modo de jogo.")
+                #listar apps nas areas de trabalho e numerar igual acima
+                
             #fazer o modo de jogo ser cofigurado com o terminal abrir novo terminal e listar imagens na pasta,perguntar se deseja modificar algum modo,
             #perguntar quantas imagens deseja nesse modo, listar as imagens com numeros e perguntar pela quantidade que ele escolheu uma de cada vez
             #perguntar nome do modo, pergutar se deseja abrir algum app com esse modo se 0 nao se qualquer outro quantidade que deseja e printar no final "modo configurado".
