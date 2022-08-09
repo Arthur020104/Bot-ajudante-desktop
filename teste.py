@@ -7,6 +7,8 @@ import subprocess
 from datetime import datetime
 import sqlite3
 import random
+import sys
+sys.setrecursionlimit(10**9)
 # configurando sql database
 try:
     db = sqlite3.connect(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db")
@@ -82,7 +84,6 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
             print(modos_de_jogo)
             if not modos_de_jogo:
                 print(modos_de_jogo)
-                print('x')
                 print('Você ainda nao adicionou nenhum modo de jogo.')
                 escutar_audio_mic_reconhecer_falar()
             if name in modos_de_jogo:
@@ -93,12 +94,14 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
                 img = imgs_list[random.randrange(0, len(imgs_list))]
                 apps_list = dados_modo[3].split("\n")
                 alterar_desktop_img(img)
+                if not apps_list[0]:
+                    escutar_audio_mic_reconhecer_falar()
                 for app in apps_list:
-                    open_app(app)
+                    open_app(app, 1)
             if 'deletar' in name:
                 namedel = retornarpesquisa(frase, 'modo de jogo deletar').lower()
                 if not namedel in modos_de_jogo:
-                    return
+                    escutar_audio_mic_reconhecer_falar()
                 db.execute('DELETE FROM modos_de_jogo WHERE nome == ?',(namedel,))
                 db.commit()
 
@@ -121,6 +124,8 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
         if 'r2'in frase.lower():
             motor.say("Olá")
             motor.runAndWait()
+        if f'desligar computador {os.getlogin()}'.lower() in frase.lower():
+            return os.system("shutdown /s /t 1")
         if 'esconder barra' in frase.lower():
             run(hideBar)
         if 'mostrar barra' in frase.lower():
@@ -197,7 +202,7 @@ def criar_pastawallpapers_senaoexite():
         os.mkdir(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers")
     if not os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/Ler.txt"):
         arquivo = open(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/Ler.txt", 'w+')
-        arquivo.writelines("Adicionar os wallpapers nessa pasta e todos os nomes dos arquivos devem ser com letras minúsculas.")
+        arquivo.writelines("Adicionar os wallpapers nessa pasta, todos os nomes dos arquivos devem ser com letras minúsculas.\n\nPara abrir algum app da área de trabalho\n	Falar: abrir [nome do app]\n\nPara fechar algum app\n	Falar: fechar [nome do app]\n\nModos de jogo\n-Para configurar modo de jogo:\n	Falar: modo de jogo criar\n		obs:Após seguir a configuraçao no console, com suas preferências\n\n-Para deletar modo de jogo:\n	Falar: modo de jogo deletar [nome do modo de jogo]\n\n-Para iniciar modo de jogo:\n	Falar: modo de jogo [nome do modo de jogo]\n\nMudar papéis de parede:\n	Falar: mudar [nome do papel de parede]\n\nBarra de tarefa:\n-Para esconder a barra de tarefas\n	Falar: esconder barra\n-Para mostrar a barra de tarefas\n	Falar: mostrar barra\n")
         arquivo.close()
 def alterar_desktop_img(name):
     if '.' in name:
@@ -211,18 +216,20 @@ def alterar_desktop_img(name):
     else:
         motor.say(f"Falha em localizar {name.lower().lstrip()}.")
         motor.runAndWait()
-def open_app(app):
+def open_app(app, ignorarfala = 0):
     try:
         s = app
         map(''.join,    itertools.product(*zip(s.upper(), s.lower())))
         os.startfile(f"C:/Users/{os.getlogin()}/Desktop/{app.lstrip()}")
-        motor.say(f"Abrindo {app.lstrip()}.")
-        motor.runAndWait()
+        if ignorarfala == 0:
+            motor.say(f"Abrindo {app.lstrip()}.")
+            motor.runAndWait()
     except FileNotFoundError:
         try:
             os.startfile(f"C:/Users/Public/Desktop/{app.lstrip()}")
-            motor.say(f"Abrindo {app.lstrip()}.")
-            motor.runAndWait()
+            if ignorarfala == 0:
+                motor.say(f"Abrindo {app.lstrip()}.")
+                motor.runAndWait()
         except FileNotFoundError:
             motor.say(f"Arquivo {app.lstrip()} não encontado.")
             motor.runAndWait()
