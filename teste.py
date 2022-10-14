@@ -2,14 +2,11 @@ import speech_recognition as sr
 import itertools
 import os
 import pyttsx3
-import ctypes
+import ctypes,win32con
 import subprocess
 from datetime import datetime
 import sqlite3
 import random
-import sys
-sys.setrecursionlimit(10**9)
-# configurando sql database
 try:
     db = sqlite3.connect(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db")
 except sqlite3.OperationalError:
@@ -19,7 +16,6 @@ except sqlite3.OperationalError:
     arquivo.close()
     db = sqlite3.connect(f"C:/Users/{os.getlogin()}/Documents/Db_userinfo_R2ajudante/r2ajudanteusersinfo.db")
     db.execute('''CREATE TABLE modos_de_jogo(id INTEGER PRIMARY KEY,nome TEXT, imgs_list TEXT, app_list TEXT)''')
-    #Seria melhor criar uma tabela para as imgs e uma para os apps e dps estabelecer relaçao one-to-many, mas vou deixar mais simples agr
 now = datetime.now()
 
 hideBar = "&{$p='HKCU:SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3';$v=(Get-ItemProperty -Path $p).Settings;$v[8]=3;&Set-ItemProperty -Path $p -Name Settings -Value $v;&Stop-Process -f -ProcessName explorer}"
@@ -32,20 +28,15 @@ motor.say(f"{'Bom dia' if now.hour < 12 and now.hour > 4  else 'Boa tarde' if no
 motor.runAndWait()
 def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
     microfone = sr.Recognizer()
-    #^
-    #|Habilitando mic/|usando o microfone
-    #                 ˘
     with sr.Microphone() as source:
         microfone.adjust_for_ambient_noise(source)
         print("Diga alguma coisa: ")
-        #Tenta armazenar o que foi dito numa variavel, se nao for possivel avisa que nao entedeu e chama a msm funcao dnv
         try:
             audio = microfone.listen(source,timeout=4)
         except sr.WaitTimeoutError:
             print("Não entendi")
             escutar_audio_mic_reconhecer_falar()
     try:
-        #passa a variavel de audio para o reconhecedor de padroes do google
         frase = microfone.recognize_google(audio,language='pt-BR')
         if 'modo de jogo' in frase.lower():
             name = retornarpesquisa(frase, 'modo de jogo').lower()
@@ -64,8 +55,6 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
                     imgs.append(list_imgs[num])
                 string_das_imgs = "".join([f'{imgs[i]}\n' if not i+1 == len(imgs) else f'{imgs[i]}' for i in range(len(imgs))])
                 quant_apps = int(input(f"{'*'*55}\nQuantos apps você deseja abrir nesse modo de jogo.\n{'*'*55}\n-"))
-                #list - f"C:/Users/{os.getlogin()}/Desktop/"
-                #list - C:/Users/Public/Desktop/
                 list_desktop_apps = os.listdir(f"C:/Users/{os.getlogin()}/Desktop/")
                 list_desktop_apps_public = os.listdir("C:/Users/Public/Desktop/")
                 list_all_desktop_apps = list_desktop_apps + list_desktop_apps_public
@@ -77,7 +66,6 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
                 string_dos_apps = "".join([f'{apps[i]}\n' if not i+1 == len(apps) else f'{apps[i]}' for i in range(len(apps))])
                 db.execute("INSERT INTO modos_de_jogo(nome,imgs_list,app_list) VALUES(?, ?, ?)",(nome_mododejogo, string_das_imgs,string_dos_apps,))
                 db.commit()
-               #listar apps nas areas de trabalho e numerar igual acima
             modos_de_jogo = db.execute("SELECT nome FROM modos_de_jogo")
             modos_de_jogo = modos_de_jogo.fetchall()
             modos_de_jogo = [nome[0] for nome in modos_de_jogo]
@@ -104,7 +92,6 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
                     escutar_audio_mic_reconhecer_falar()
                 db.execute('DELETE FROM modos_de_jogo WHERE nome == ?',(namedel,))
                 db.commit()
-
         print(frase)
         if 'pesquisar' in frase.lower():
             name = retornarpesquisa(frase, "pesquisar")
@@ -156,7 +143,6 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
                 todos_processos_pc = os.popen('wmic process get description, processid').read()
                 nomedoapp_title = ''.join(nomedoapp_title.split())
                 nome_app_parabusca = app.lower() if app.lower() in todos_processos_pc.lower() else nomedoapp_title.lower()
-                #se o nome do app tiver em algum processo rodando no pc, procura o processo e pergunta se era esse que queria fechar
                 if nome_app_parabusca in todos_processos_pc.lower():
                     location = todos_processos_pc.lower().find(nome_app_parabusca)
                     point = 0
@@ -186,7 +172,6 @@ def escutar_audio_mic_reconhecer_falar(question = 0, resposta = ''):
         escutar_audio_mic_reconhecer_falar()
 
     except sr.UnknownValueError:
-        #Exibir mensagem se nao reconhecer padrao de fala
         print("Não entendi")
         escutar_audio_mic_reconhecer_falar()
         
@@ -206,13 +191,16 @@ def criar_pastawallpapers_senaoexite():
         arquivo.close()
 def alterar_desktop_img(name):
     if '.' in name:
-        ctypes.windll.user32.SystemParametersInfoW(20, 0, f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}" , 2)
+        changed = win32con.SPIF_UPDATEINIFILE | win32con.SPIF_SENDCHANGE
+        ctypes.windll.user32.SystemParametersInfoW(win32con.SPI_SETDESKWALLPAPER,0,f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}",changed)
     elif os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png"):
         print(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png")
-        ctypes.windll.user32.SystemParametersInfoW(20, 0, f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png" , 2)
+        changed = win32con.SPIF_UPDATEINIFILE | win32con.SPIF_SENDCHANGE
+        ctypes.windll.user32.SystemParametersInfoW(win32con.SPI_SETDESKWALLPAPER,0,f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.png",changed)
     elif os.path.exists(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.jpg"):
         print(f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.jpg")
-        ctypes.windll.user32.SystemParametersInfoW(20, 0, f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.jpg" , 2)
+        changed = win32con.SPIF_UPDATEINIFILE | win32con.SPIF_SENDCHANGE
+        ctypes.windll.user32.SystemParametersInfoW(win32con.SPI_SETDESKWALLPAPER,0,f"C:/Users/{os.getlogin()}/Desktop/Wallpapers/{name.lower().lstrip()}.jpg",changed)
     else:
         motor.say(f"Falha em localizar {name.lower().lstrip()}.")
         motor.runAndWait()
@@ -234,7 +222,6 @@ def open_app(app, ignorarfala = 0):
             motor.say(f"Arquivo {app.lstrip()} não encontado.")
             motor.runAndWait()
             print(f"Arquivo {app.lstrip()} não encontado.")
-            #print(f"C:/Users/Arthur/Desktop/{app.lstrip()}")
 if __name__ == "__main__":
     criar_pastawallpapers_senaoexite()
     escutar_audio_mic_reconhecer_falar()
@@ -246,15 +233,15 @@ import sys"""
 #sys.path.insert(1, 'C:/Users/Arthur/Desktop/Code/SpeeachTest/')
 
 #from animacao import animation
-""" if 'animação' in frase.lower():
+"""if 'animação' in frase.lower():
     location = frase.find('animação')
     location += 8
     name = ''
     name = "".join([i if i != "/n" and i != ""else "" for i in frase[location:len(frase)]])
     print(name)
-    if os.path.exists('C:/Users/Arthur/Desktop/Code/SpeeachTest/pasta_imagens/'):
-        shutil.rmtree('C:/Users/Arthur/Desktop/Code/SpeeachTest/pasta_imagens')
-    if os.path.exists(f"C:/Users/Arthur/Downloads/{name.lower()c}.mp4"):
+    if os.path.exists('C:/Users/Arthur/Desktop/teste_animation'):
+        shutil.rmtree('C:/Users/Arthur/Desktop/teste_animation')
+    if os.path.exists(f"C:/Users/Arthur/Downloads/{name.lower().lstrip()}.mp4"):
         p = Process(target=animation, args=(name,))
         p.daemon = True
         p.start()"""
